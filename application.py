@@ -37,10 +37,16 @@ async def chatroom_ws(websocket):
 
 async def chatroom_ws_receiver(websocket, channel_name):
     async for message in websocket.iter_text():
+        print("chatroom_ws_receiver")
+        print(channel_name)
+        print("chatroom_ws_receiver")
         await broadcast.publish(channel=channel_name, message=message)
 
 
 async def chatroom_ws_sender(websocket, channel_name):
+    print('chatroom_ws_sender')
+    print(channel_name)
+    print('chatroom_ws_sender')
     async with broadcast.subscribe(channel=channel_name) as subscriber:
         async for event in subscriber:
             await websocket.send_text(
