@@ -1,3 +1,4 @@
+import json
 from broadcaster import Broadcast
 from starlette.applications import Starlette
 from starlette.concurrency import run_until_first_complete
@@ -7,6 +8,9 @@ from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
+import requests
+import aiohttp
+import asyncio
 
 
 load_dotenv()  # Load .env variables
@@ -37,20 +41,26 @@ async def chatroom_ws(websocket):
 
 async def chatroom_ws_receiver(websocket, channel_name):
     async for message in websocket.iter_text():
-        print("chatroom_ws_receiver")
-        print(channel_name)
-        print("chatroom_ws_receiver")
         await broadcast.publish(channel=channel_name, message=message)
 
 
 async def chatroom_ws_sender(websocket, channel_name):
-    print('chatroom_ws_sender')
-    print(channel_name)
-    print('chatroom_ws_sender')
     async with broadcast.subscribe(channel=channel_name) as subscriber:
         async for event in subscriber:
             await websocket.send_text(
                 event.message
+            )
+            await websocket.send_text(
+                '{"action":"message","user":"안내사항","message":"봇이 입력 중입니다"}'
+            )
+            params = {"m": json.loads(event.message)['message']}
+            async with aiohttp.ClientSession() as session:
+                async with session.get("https://2lc3zydxt0.execute-api.ap-northeast-2.amazonaws.com/default/test-01", params=params) as resp:
+                    r = await resp.json()
+            bot_message = r['choices'][0]['message']['content']
+            bot_message = json.dumps(bot_message, ensure_ascii=False)
+            await websocket.send_text(
+                f'{{"action":"message","user":"신한투자증권 프로봇","message":{bot_message}}}'
             )
 
 
@@ -76,4 +86,3 @@ app = Starlette(
     on_startup=[broadcast.connect],
     on_shutdown=[broadcast.disconnect],
     middleware=middleware
-)
