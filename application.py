@@ -86,3 +86,4 @@ app = Starlette(
     on_startup=[broadcast.connect],
     on_shutdown=[broadcast.disconnect],
     middleware=middleware
+)
