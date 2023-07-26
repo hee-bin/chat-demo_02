@@ -19,6 +19,7 @@ if os.environ.get("ENV_STATE") == "prod":
     print("Production mode")
     broadcast = Broadcast("redis://"+os.environ.get('REDIS_HOST')+":6379")
 else:
+    print("Development mode")
     broadcast = Broadcast("redis://127.0.0.1:6379")
 templates = Jinja2Templates("templates")
 
@@ -84,7 +85,5 @@ app = Starlette(
     routes=routes,
     on_startup=[broadcast.connect],
     on_shutdown=[broadcast.disconnect],
-    middleware=middleware,
-    host='0.0.0.0',  # 0.0.0.0으로 설정하여 모든 IP에서 들어오는 요청을 수락합니다.
-    port=80,  # 원하는 포트 번호를 설정합니다. Elastic Beanstalk의 로드 밸런서가 요청을 해당 포트로 전달합니다.
+    middleware=middleware
 )
